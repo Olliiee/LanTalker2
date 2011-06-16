@@ -136,23 +136,26 @@ namespace LanTalker2
                     Byte[] data = System.Text.Encoding.ASCII.GetBytes(encoder.GetString(message, 0, bytesRead));
                     byter.screamer("Original Msg: " + byter.ByteArrayToString(data), false, debugger);
                     readMessage = byter.ByteArrayToString(data);
-
+                    byter.screamer("Init is " + init.ToString(), false, debugger);
                     if (init == true)
                     {
-                        if (initProt(readMessage, client) > 0)
-                            init = true;
+                        protVersion = initProt(readMessage, client);
+                        if (protVersion > 0)
+                            init = false;
                     }
                     else if (init == false)
                     {
+                        byter.screamer("Using ProtV1  " + protVersion.ToString(), false, debugger);
                         if (protVersion == 1)
                         {
+                            
                             protV1(readMessage, client);
                         }
                     }
                 }
-                sendMsg("CLOSE", client);
-                tcpClient.Close();
-                byter.screamer("Connection closed to " + tcpClient.Client.RemoteEndPoint, false, debugger);
+                //sendMsg("CLOSE", client);
+                //tcpClient.Close();
+                //byter.screamer("Connection closed to " + tcpClient.Client.RemoteEndPoint, false, debugger);
 
             }
         }
@@ -174,19 +177,12 @@ namespace LanTalker2
                 if (msgArray[2] == "1")
                 {
                     protVersion = 1;
-                    //data = byter.StringToByteArray("TalkerV:" + protVersion.ToString() + ":OK");
-                    //clientStream.Write(data, 0, data.Length);
                     sendMsg("TalkerV:" + protVersion.ToString() + ":OK", client);
                     byter.screamer("Protocol Version set to V" + protVersion.ToString(), false, debugger);
                 }
                 else
                 {
-                    //data = byter.StringToByteArray("TalkerV:NOK");
-                    //clientStream.Write(data, 0, data.Length);
                     sendMsg("TalkerV:NOK", client);
-                                
-                    //data = byter.StringToByteArray("CLOSE");
-                    //clientStream.Write(data, 0, data.Length);
                     sendMsg("CLOSE", client);
                     clientStream.Close();
                     byter.screamer("Unable to set a new protocol version. Connection closed!", false, debugger);
@@ -230,7 +226,7 @@ namespace LanTalker2
 
                 foreach (string msg in msgArray)
                 {
-                    byter.screamer("Parsing Msg: " + parser.parseText(msg), false, debugger);
+                    byter.screamer("Result: " + parser.parseText(msg), false, debugger);
                     resultList.Add(parser.parseText(msg));
                     i++;
                 }
@@ -242,8 +238,6 @@ namespace LanTalker2
                     resultArray[i++] = msg;
                 }
                 byter.screamer("Send Msg to " + tcpClient.Client.RemoteEndPoint, false, debugger);
-                //data = byter.StringToByteArray(byter.ConvertStringArrayToString(resultArray));
-                //clientStream.Write(data, 0, data.Length);
                 sendMsg(byter.ConvertStringArrayToString(resultArray), client);
             }
             else
@@ -251,11 +245,9 @@ namespace LanTalker2
                 if (readMessage.Contains(":") == true)
                 {
                     readMessage = parser.parseText(readMessage);
-                    byter.screamer("Parsing Msg: " + readMessage, false, debugger);
+                    byter.screamer("Result: " + readMessage, false, debugger);
 
                     byter.screamer("Send Msg to " + tcpClient.Client.RemoteEndPoint, false, debugger);
-                    //data = byter.StringToByteArray(readMessage);
-                    //clientStream.Write(data, 0, data.Length);
                     sendMsg(readMessage, client);
                 }
                 else
