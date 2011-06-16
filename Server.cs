@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using FSUIPC;
+using System.Diagnostics;
 
 namespace LanTalker2
 {
@@ -212,6 +213,8 @@ namespace LanTalker2
 
         private void protV1(string readMessage, object client)
         {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
             TcpClient tcpClient = (TcpClient)client;
             if (readMessage == "CLOSE")
             {
@@ -255,6 +258,9 @@ namespace LanTalker2
                     sendMsg("REQ:NOK", client);
                 }
             }
+
+            watch.Stop();
+            byter.screamer("Time spent V1: " + watch.Elapsed, false, debugger);
         }
     }
 }
