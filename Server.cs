@@ -32,21 +32,39 @@ namespace LanTalker2
         {
             debugger = debug;
             
-            this.tcpListener = new TcpListener(IPAddress.Any, 3000);
-            this.listenThread = new Thread(new ThreadStart(ListenForClients));
-            this.listenThread.Start();
+
+            //Starting the tcpclient to listen for clients
+            try
+            {
+                this.tcpListener = new TcpListener(IPAddress.Any, 3000);
+                this.listenThread = new Thread(new ThreadStart(ListenForClients));
+                this.listenThread.Start();
+            }
+            catch (Exception ex)
+            {
+                byter.screamer("Unable to listen for clients: " + ex, true, debugger);
+                byter.screamer("Closing", true, debugger);
+                Thread.Sleep(5000);
+
+                //Can't work without a network, bye bye!
+                Environment.Exit(0);
+            }
+
             byter.screamer(lanTalker, true, debugger);
-            
+
             if (debugger == true)
                 byter.screamer("Running in debug-mode", false, debugger);
 
             byter.screamer("Server is running ..", true, debugger);
             
+            //Looking for the local ip
             string HostName = System.Net.Dns.GetHostName();
             System.Net.IPHostEntry hostInfo = System.Net.Dns.GetHostByName(HostName);
             string IpAdresse = hostInfo.AddressList[0].ToString();
             byter.screamer("Server IP " + IpAdresse, true, debugger);
 
+            //Try to connect to the FS via the FSUIPC Client for .NET
+            //http://forum.simflight.com/topic/40989-fsuipc-client-dll-for-net-version-20/
             try
             {
                 FSUIPCConnection.Open();
@@ -63,7 +81,9 @@ namespace LanTalker2
         }
 
         
-
+        /// <summary>
+        /// Psssssst, the clients are talking I listen to them
+        /// </summary>
         private void ListenForClients()
         {
             this.tcpListener.Start();            
@@ -78,6 +98,7 @@ namespace LanTalker2
                 //with connected client
                 Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClientComm));
 
+                //Version 1 is current in use, that's what we want.
                 Byte[] data = byter.StringToByteArray("TalkerV:1");
                 clientStream.Write(data, 0, data.Length);
                 byter.screamer("Client connected " + client.Client.RemoteEndPoint, true, debugger);
@@ -86,7 +107,10 @@ namespace LanTalker2
             }  
         }
 
-
+        /// <summary>
+        /// The talking area
+        /// </summary>
+        /// <param name="client">tcpclient obeject</param>
         private void HandleClientComm(object client)
         {
             TcpClient tcpClient = (TcpClient)client;
@@ -98,8 +122,6 @@ namespace LanTalker2
                 NetworkStream clientStream = tcpClient.GetStream();
                 clientStream.ReadTimeout = 5000;
                 
-
-
                 byte[] message = new byte[4096];
                 int bytesRead;
                 string readMessage;
@@ -133,11 +155,13 @@ namespace LanTalker2
                     //message has successfully been received
                     ASCIIEncoding encoder = new ASCIIEncoding();
 
-
+                    //Encoding the received message
                     Byte[] data = System.Text.Encoding.ASCII.GetBytes(encoder.GetString(message, 0, bytesRead));
                     byter.screamer("Original Msg: " + byter.ByteArrayToString(data), false, debugger);
                     readMessage = byter.ByteArrayToString(data);
                     byter.screamer("Init is " + init.ToString(), false, debugger);
+
+                    //Check the correct version
                     if (init == true)
                     {
                         protVersion = initProt(readMessage, client);
@@ -149,7 +173,6 @@ namespace LanTalker2
                         byter.screamer("Using ProtV1  " + protVersion.ToString(), false, debugger);
                         if (protVersion == 1)
                         {
-                            
                             protV1(readMessage, client);
                         }
                     }
@@ -161,12 +184,20 @@ namespace LanTalker2
             }
         }
 
+        /// <summary>
+        /// Let's talk about the protocol
+        /// </summary>
+        /// <param name="readMessage">The protocol version requested by the client</param>
+        /// <param name="client">tcpclient object</param>
+        /// <returns>protocol version</returns>
         private int initProt(string readMessage, object client)
         {
             TcpClient tcpClient = (TcpClient)client;
             NetworkStream clientStream = tcpClient.GetStream();
 
             int protVersion = 0;
+
+            //Version 1 is what we want today
             if (readMessage == "TalkerV:1:OK")
             {
                 protVersion = 1;
@@ -181,7 +212,7 @@ namespace LanTalker2
                     sendMsg("TalkerV:" + protVersion.ToString() + ":OK", client);
                     byter.screamer("Protocol Version set to V" + protVersion.ToString(), false, debugger);
                 }
-                else
+                else //all the other stuff will be denied
                 {
                     sendMsg("TalkerV:NOK", client);
                     sendMsg("CLOSE", client);
@@ -192,6 +223,12 @@ namespace LanTalker2
             return protVersion;
         }
 
+        /// <summary>
+        /// Sending a message to the client
+        /// </summary>
+        /// <param name="msg">The message, check the readme</param>
+        /// <param name="client">tcpclient object</param>
+        /// <returns>true message was send, false message was not send</returns>
         private bool sendMsg(string msg, object client)
         {
             try
@@ -211,22 +248,44 @@ namespace LanTalker2
             }
         }
 
+
+        /// <summary>
+        /// All the thing we can receive by using V1
+        /// </summary>
+        /// <param name="readMessage">The message send by the client</param>
+        /// <param name="client">tcpclient object</param>
         private void protV1(string readMessage, object client)
         {
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
+            //Stopwatch watch = new Stopwatch();
+            //watch.Start();
+
+            /*
+             * The V1 can handle the following requests or orders:
+             * TalkerV - the protocol version the server/clients like to talk
+             * READ - read the following offset (READ:0560)
+             * WRITE - write tot the following offset with a value (WRITE:0262:1)
+             * TRAFFIC - read all traffic (TRAFFIC:POSITION)
+             * CLOSE - close the connection
+             * REQ - sends an reqly to the request (OK or NOK)
+             */
+
             TcpClient tcpClient = (TcpClient)client;
+
+            //If the message contains a "CLOSE" order
             if (readMessage == "CLOSE")
             {
                 tcpClient.Close();
                 byter.screamer("Connection closed by " + tcpClient.Client.RemoteEndPoint, false, debugger);
             }
+
+            // If the messahe contais multiple requests
             else if (readMessage.Contains("|"))
             {
                 string[] msgArray = readMessage.Split('|');
                 List<string> resultList = new List<string>();
                 int i = 0;
 
+                // splitting the message and parse it
                 foreach (string msg in msgArray)
                 {
                     byter.screamer("Result: " + parser.parseText(msg), false, debugger);
@@ -234,6 +293,7 @@ namespace LanTalker2
                     i++;
                 }
 
+                // creatting a new array to send the reply
                 string[] resultArray = new string[i];
                 i = 0;
                 foreach (string msg in resultList)
@@ -243,6 +303,8 @@ namespace LanTalker2
                 byter.screamer("Send Msg to " + tcpClient.Client.RemoteEndPoint, false, debugger);
                 sendMsg(byter.ConvertStringArrayToString(resultArray), client);
             }
+
+            // If the message contains a single request
             else
             {
                 if (readMessage.Contains(":") == true)
@@ -259,8 +321,8 @@ namespace LanTalker2
                 }
             }
 
-            watch.Stop();
-            byter.screamer("Time spent V1: " + watch.Elapsed, false, debugger);
+            //watch.Stop();
+            //byter.screamer("Time spent V1: " + watch.Elapsed, false, debugger);
         }
     }
 }

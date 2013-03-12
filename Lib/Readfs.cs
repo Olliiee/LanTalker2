@@ -16,6 +16,12 @@ namespace LanTalker2.Lib
 		
 		LanTalker2.Lib.fsuipcError uipcerror = new Lib.fsuipcError();
 		
+		/// <summary>
+		/// The function reads the data via the FSUIPC interface
+		/// </summary>
+		/// <param name="size">The offsets size: 1 = Byte; 2 = Int16; 4 = Int32; 8 = Int64</param>
+		/// <param name="offset">The FS offset</param>
+		/// <returns>The value of the requested offset</returns>
 		public string readFsData(string size, string offset)
 		{
 			string result = "NOK";
@@ -112,6 +118,13 @@ namespace LanTalker2.Lib
 			return result;
 		}
 
+		/// <summary>
+		/// Writes the data to the FS via the FSUIPC interface
+		/// </summary>
+		/// <param name="size">The offsets size: 1 = Byte; 2 = Int16; 4 = Int32; 8 = Int64</param>
+		/// <param name="offset">The FS offset</param>
+		/// <param name="newValue">The new value</param>
+		/// <returns>Ok or NOK</returns>
 		public string writeFS(string size, string offset, string newValue)
 		{
 			string result = "NOK";

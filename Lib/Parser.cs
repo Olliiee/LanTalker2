@@ -5,7 +5,10 @@ namespace LanTalker2
 {
 	public class Parser
 	{
-		
+		/// <summary>
+		/// It's a little DLL to read an write the FS data.
+		/// Check the offsets folder for the c# code
+		/// </summary>
 		Offsets.OffsetClass offsets = new OffsetClass();
 		
 		/// <summary>
@@ -18,22 +21,35 @@ namespace LanTalker2
 			string[] clientData = clientText.Split(':');
 			string result = "NOK";
 
-			if (clientData[0] == "READ")
+			switch (clientData[0])
 			{
-				result = offsets.processData(clientData[0], clientData[1]);
-			}
-			else if (clientData[0] == "WRITE")
-			{
-				result = offsets.processData(clientData[0], clientData[1], clientData[2]);
-			}
-			else if (clientData[0] == "TRAFFIC")
-			{
-				result = traffic(clientText);
+				case "READ":
+					{
+						result = offsets.processData(clientData[0], clientData[1]);
+						break;
+					}
+				case "WRITE":
+					{
+					   result = offsets.processData(clientData[0], clientData[1], clientData[2]);
+					   break;
+					}
+
+				case "TRAFFIC":
+					{
+						result = traffic(clientText);
+						break;
+					}
+			
 			}
 			
 			return result;
 		}
 
+		/// <summary>
+		/// Requests the AI traffic information
+		/// </summary>
+		/// <param name="clientText">In normale cases it should be 'POSITION'</param>
+		/// <returns>Returns a resultset for the client</returns>
 		private string traffic(string clientText)
 		{
 			string[] clientData = clientText.Split(':');
@@ -68,7 +84,8 @@ namespace LanTalker2
 						}
 						break;
 					}
-
+					// Whatever ...
+					//case "":
 			}
 
 			return result;
