@@ -1,0 +1,52 @@
+Client
+{
+	"WRITE":{
+		"Offset":[
+			"0262",
+			"05DE"
+		],
+		"Value":[
+			"1",
+			"1"
+		]
+	},
+	"READ":
+	{
+		"Offset":[
+			"0560",
+			"0568",
+			"4711"
+		]
+	},
+	"TRAFFIC":"POSITION",
+	"ACTION":"CLOSE"
+}
+
+
+Server
+{
+	"WRITE":{
+		"Ofsset":[
+			"0262",
+			"05DE"
+		],
+		"Status":[
+			"Ok",
+			"NOk"
+		]
+	},
+	"READ":
+	{
+		"Offset":[
+			"0262",
+			"05DE"
+		],
+		"Value":[
+			"24475928671485952",
+			"346146811405139968",
+			"NOk"
+		]
+	},
+	"TRAFFIC":
+	['ID', 'Callsing', 'Latitude', 'Longitude', 'Heading', 'Altitude']
+}
