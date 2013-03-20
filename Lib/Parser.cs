@@ -64,7 +64,7 @@ namespace LanTalker2
 					{
 						try
 						{
-							
+
 							result = "";
 							foreach (AIPlaneInfo plane in FSUIPCConnection.AITrafficServices.AllTraffic)
 							{
@@ -84,8 +84,7 @@ namespace LanTalker2
 						}
 						break;
 					}
-					// Whatever ...
-					//case "":
+				
 			}
 
 			return result;

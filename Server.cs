@@ -8,6 +8,7 @@ using System.Threading;
 using FSUIPC;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using Offsets;
 
 namespace LanTalker2
 {
@@ -188,10 +189,14 @@ namespace LanTalker2
                     }
                     else if (init == false)
                     {
-                        byter.screamer("Using ProtV1  " + protVersion.ToString(), false, debugger);
+                        byter.screamer("Using ProtV " + protVersion.ToString(), false, debugger);
                         if (protVersion == 1)
                         {
                             protV1(readMessage, client);
+                        }
+                        else if (protVersion == 2)
+                        {
+                            protV2(readMessage, client);
                         }
                     }
                 }
@@ -215,7 +220,7 @@ namespace LanTalker2
 
             int protVersion = 0;
 
-            //Version 1 is what we want today
+            //Version 2 is what we want today
             if (readMessage == "TalkerV:1:OK")
             {
                 protVersion = 1;
@@ -229,6 +234,12 @@ namespace LanTalker2
                     protVersion = 1;
                     sendMsg("TalkerV:" + protVersion.ToString() + ":OK", client);
                     byter.screamer("Protocol Version set to V" + protVersion.ToString(), false, debugger);
+                }
+                else if (msgArray[2] == "2")
+                {
+                    protVersion = 2;
+                    sendMsg("TalkerV:" + protVersion.ToString() + ":OK", client);
+                    byter.screamer("Protocol Version set to V" + protVersion.ToString() + " (JSON)", false, debugger);
                 }
                 else //all the other stuff will be denied
                 {
@@ -341,6 +352,92 @@ namespace LanTalker2
 
             //watch.Stop();
             //byter.screamer("Time spent V1: " + watch.Elapsed, false, debugger);
+        }
+
+        /// <summary>
+        /// Protocol version 2 JSON
+        /// This protocol uses the JOSN.NET framework
+        /// </summary>
+        /// <param name="readMessage"></param>
+        /// <param name="client"></param>
+        private void protV2(string readMessage, object client)
+        {
+            TcpClient tcpClient = (TcpClient)client;
+            LanTalker2.Lib.json.RootObject root = new Lib.json.RootObject();
+            Offsets.OffsetClass offsets = new OffsetClass();
+
+            Lib.json.RootObject rootMsg = JsonConvert.DeserializeObject<Lib.json.RootObject>(readMessage);
+            Lib.json.RootObject rootSend = new Lib.json.RootObject();
+
+            if (rootMsg.READ != null && rootMsg.READ.Offset.Count > 0)
+            {
+                rootSend.READ.Offset = new List<string>();
+                rootSend.READ.Value = new List<string>();
+
+                for (int i = 0; i < rootMsg.READ.Offset.Count; i++)
+                {
+                    rootSend.READ.Offset.Add(rootMsg.READ.Offset[i]);
+                    rootSend.READ.Value.Add(offsets.processData("READ", rootMsg.READ.Offset[i]));
+                    /*
+                     * send result as Msg via tcpclient
+                     * result as an json array
+                     */
+                }
+            }
+
+            if (rootMsg.WRITE != null && rootMsg.WRITE.Offset.Count > 0)
+            {
+                rootSend.WRITE.Offset = new List<string>();
+                rootSend.WRITE.Value = new List<string>();
+
+                for (int i = 0; i < rootMsg.WRITE.Offset.Count; i++)
+                {
+                    rootSend.WRITE.Offset.Add(rootMsg.WRITE.Offset[i]);
+                    rootSend.WRITE.Value.Add(offsets.processData("WRITE", rootMsg.READ.Offset[i], rootMsg.WRITE.Value[i]));
+                    /*
+                     * send result as Msg via tcpclient
+                     * result as an json array
+                     */
+                }
+            }
+
+            if (rootMsg.TRAFFIC != null && rootMsg.TRAFFIC.Flight[0] == "Position")
+            {
+                rootSend.TRAFFIC.ID = new List<string>();
+                rootSend.TRAFFIC.Altitude = new List<string>();
+                rootSend.TRAFFIC.Callsign = new List<string>();
+                rootSend.TRAFFIC.Heading = new List<string>();
+                rootSend.TRAFFIC.Latitude = new List<string>();
+                rootSend.TRAFFIC.Longitude = new List<string>();
+
+                AITrafficServices AI = FSUIPCConnection.AITrafficServices;
+                AI.RefreshAITrafficInformation();
+
+                foreach (AIPlaneInfo plane in FSUIPCConnection.AITrafficServices.AllTraffic)
+                {
+                    rootSend.TRAFFIC.ID.Add(plane.ID.ToString());
+                    rootSend.TRAFFIC.Callsign.Add(plane.ATCIdentifier);
+                    rootSend.TRAFFIC.Latitude.Add(plane.Location.Latitude.DecimalDegrees.ToString());
+                    rootSend.TRAFFIC.Longitude.Add(plane.Location.Longitude.DecimalDegrees.ToString());
+                    rootSend.TRAFFIC.Heading.Add(plane.HeadingDegrees.ToString());
+                    rootSend.TRAFFIC.Altitude.Add(plane.AltitudeFeet.ToString());
+                }
+            }
+
+
+            if (rootMsg.ACTION != null && rootMsg.ACTION.Req.Count > 0)
+            {
+                for (int i = 0; i < rootMsg.ACTION.Req.Count; i++)
+                {
+                    if (rootMsg.ACTION.Req[i] == "CLOSE")
+                    {
+                        tcpClient.Close();
+                        byter.screamer("Connection closed by " + tcpClient.Client.RemoteEndPoint, false, debugger);
+                    }
+                }
+            }
+
+            sendMsg(JsonConvert.SerializeObject(rootMsg), tcpClient);
         }
     }
 }

@@ -18,35 +18,56 @@ Client
 			"4711"
 		]
 	},
-	"TRAFFIC":"POSITION",
-	"ACTION":"CLOSE"
+	"TRAFFIC":
+	{
+		"Flight":"Position"
+	},
+	"ACTION":
+	{
+		"Req":"CLOSE"
+	}
 }
 
 
 Server
 {
-	"WRITE":{
-		"Ofsset":[
+	"WRITE":
+	{
+		"Offset":
+		[
 			"0262",
 			"05DE"
 		],
-		"Status":[
+		"Status":
+		[
 			"Ok",
 			"NOk"
 		]
 	},
 	"READ":
 	{
-		"Offset":[
+		"Offset":
+		[
 			"0262",
 			"05DE"
 		],
-		"Value":[
+		"Value":
+		[
 			"24475928671485952",
-			"346146811405139968",
-			"NOk"
+			"346146811405139968"
 		]
 	},
 	"TRAFFIC":
-	['ID', 'Callsing', 'Latitude', 'Longitude', 'Heading', 'Altitude']
+	{
+		"ID":[],
+		"Callsign":[],
+		"Latitude":[],
+		"Longitude":[],
+		"Heading":[],
+		"Altitude":[]
+	},
+	"ACTION":
+	{
+		"Req":"CLOSE"
+	}
 }
