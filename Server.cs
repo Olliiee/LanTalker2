@@ -63,23 +63,14 @@ namespace LanTalker2
             string HostName = System.Net.Dns.GetHostName();
             System.Net.IPHostEntry hostInfo = System.Net.Dns.GetHostEntry(HostName);
 
-            //More then one IP?
-            if (hostInfo.AddressList.Length > 1)
+            byter.screamer("Server IP: ", true, debugger);
+            int h = 1;
+            for (int i = 0; i < hostInfo.AddressList.Length; i++)
             {
-                byter.screamer("Which is the correct IP?", true, false);
-                int h = 1;
-                for (int i = 0; i < hostInfo.AddressList.Length; i++)
-                {
-                    byter.screamer(h.ToString() + ") " + hostInfo.AddressList[i].ToString(), true, false);
-                    h++;
-                }
-                string line = Console.ReadLine();
-                byter.screamer("Server IP " + hostInfo.AddressList[Int32.Parse(line)-1].ToString(), true, debugger);
+                byter.screamer(h.ToString() + ") " + hostInfo.AddressList[i].ToString(), true, false);
+                h++;
             }
-            else
-            {
-                byter.screamer("Server IP " + hostInfo.AddressList[0].ToString(), true, debugger);
-            }
+                
             
 
             //Try to connect to the FS via the FSUIPC Client for .NET
