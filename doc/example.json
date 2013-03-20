@@ -41,7 +41,7 @@ Server
 		"Status":
 		[
 			"Ok",
-			"NOk"
+			"NOK"
 		]
 	},
 	"READ":
