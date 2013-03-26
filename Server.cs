@@ -298,7 +298,7 @@ namespace LanTalker2
                 byter.screamer("Connection closed by " + tcpClient.Client.RemoteEndPoint, false, debugger);
             }
 
-            // If the messahe contais multiple requests
+            // If the message contais multiple requests
             else if (readMessage.Contains("|"))
             {
                 string[] msgArray = readMessage.Split('|');
@@ -362,33 +362,49 @@ namespace LanTalker2
 
             if (rootMsg.READ != null && rootMsg.READ.Offset.Count > 0)
             {
-                rootSend.READ.Offset = new List<string>();
-                rootSend.READ.Value = new List<string>();
-
-                for (int i = 0; i < rootMsg.READ.Offset.Count; i++)
+                if (rootMsg.READ.Offset.Count == rootMsg.READ.Value.Count)
                 {
-                    rootSend.READ.Offset.Add(rootMsg.READ.Offset[i]);
-                    rootSend.READ.Value.Add(offsets.processData("READ", rootMsg.READ.Offset[i]));
-                    /*
-                     * send result as Msg via tcpclient
-                     * result as an json array
-                     */
+                    rootSend.READ.Offset = new List<string>();
+                    rootSend.READ.Value = new List<string>();
+
+                    for (int i = 0; i <= rootMsg.READ.Offset.Count - 1; i++)
+                    {
+                        rootSend.READ.Offset.Add(rootMsg.READ.Offset[i]);
+                        rootSend.READ.Value.Add(offsets.processData("READ", rootMsg.READ.Offset[i]));
+                        /*
+                         * send result as Msg via tcpclient
+                         * result as an json array
+                         */
+                    }
+                }
+                else
+                {
+                    rootSend.ACTION.Req = new List<string>();
+                    rootSend.ACTION.Req.Add("ERROR_READ");
                 }
             }
 
             if (rootMsg.WRITE != null && rootMsg.WRITE.Offset.Count > 0)
             {
-                rootSend.WRITE.Offset = new List<string>();
-                rootSend.WRITE.Value = new List<string>();
-
-                for (int i = 0; i < rootMsg.WRITE.Offset.Count; i++)
+                if (rootMsg.WRITE.Offset.Count == rootMsg.WRITE.Value.Count)
                 {
-                    rootSend.WRITE.Offset.Add(rootMsg.WRITE.Offset[i]);
-                    rootSend.WRITE.Value.Add(offsets.processData("WRITE", rootMsg.READ.Offset[i], rootMsg.WRITE.Value[i]));
-                    /*
-                     * send result as Msg via tcpclient
-                     * result as an json array
-                     */
+                    rootSend.WRITE.Offset = new List<string>();
+                    rootSend.WRITE.Value = new List<string>();
+
+                    for (int i = 0; i <= rootMsg.WRITE.Offset.Count - 1; i++)
+                    {
+                        rootSend.WRITE.Offset.Add(rootMsg.WRITE.Offset[i]);
+                        rootSend.WRITE.Value.Add(offsets.processData("WRITE", rootMsg.READ.Offset[i], rootMsg.WRITE.Value[i]));
+                        /*
+                         * send result as Msg via tcpclient
+                         * result as an json array
+                         */
+                    }
+                }
+                else
+                {
+                    rootSend.ACTION.Req = new List<string>();
+                    rootSend.ACTION.Req.Add("ERROR_WRITE");
                 }
             }
 
@@ -418,17 +434,25 @@ namespace LanTalker2
 
             if (rootMsg.ACTION != null && rootMsg.ACTION.Req.Count > 0)
             {
-                for (int i = 0; i < rootMsg.ACTION.Req.Count; i++)
+                for (int i = 0; i < rootMsg.ACTION.Req.Count - 1; i++)
                 {
                     if (rootMsg.ACTION.Req[i] == "CLOSE")
                     {
                         tcpClient.Close();
                         byter.screamer("Connection closed by " + tcpClient.Client.RemoteEndPoint, false, debugger);
                     }
+                    else if (rootMsg.ACTION.Req[i] == "ERROR_READ")
+                    {
+                        byter.screamer("Last read request could not be processed.", false, debugger);
+                    }
+                    else if (rootMsg.ACTION.Req[i] == "ERROR_WRITE")
+                    {
+                        byter.screamer("Last write request could not be processed.", false, debugger);
+                    }
                 }
             }
 
-            sendMsg(JsonConvert.SerializeObject(rootMsg), tcpClient);
+            sendMsg(JsonConvert.SerializeObject(rootSend), tcpClient);
         }
     }
 }

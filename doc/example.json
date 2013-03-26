@@ -68,6 +68,8 @@ Server
 	},
 	"ACTION":
 	{
-		"Req":"CLOSE"
+		"Req":"CLOSE",
+		"Req":"ERROR_READ",
+		"Req":"ERROR_WRITE"
 	}
 }
