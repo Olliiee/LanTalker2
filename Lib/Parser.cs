@@ -1,7 +1,7 @@
 ﻿using Offsets;
 using FSUIPC;
 
-namespace LanTalker2
+namespace LanTalker2.Lib
 {
 	public class Parser
 	{
