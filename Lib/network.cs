@@ -89,14 +89,14 @@ namespace LanTalker2.Lib
                         break;
                     }
 
-                    //message has successfully been received
-                    ASCIIEncoding encoder = new ASCIIEncoding();
-
                     //Encoding the received message
+                    UTF8Encoding encoder = new UTF8Encoding();
+                    
                     Byte[] data = System.Text.Encoding.ASCII.GetBytes(encoder.GetString(message, 0, bytesRead));
                     logging.screamer("Original Msg: " + logging.ByteArrayToString(data), settings.debugger, settings.debugger);
-                    readMessage = logging.ByteArrayToString(data);
-                    sendMsg(protV2(readMessage, client), client);
+                    
+                    sendMsg(protV2(encoder.GetString(message, 0, bytesRead), client), client);
+                                        
                     logging.screamer("Message send", settings.debugger, settings.debugger);
                 }
             }

@@ -29,23 +29,6 @@ namespace LanTalker2.Lib
         }
 
         /// <summary>
-        /// Converts an string array to a single string
-        /// </summary>
-        /// <param name="array">The string array</param>
-        /// <returns>The array</returns>
-        public string ConvertStringArrayToString(string[] array)
-        {
-            StringBuilder builder = new StringBuilder();
-            foreach (string value in array)
-            {
-                builder.Append(value);
-                builder.Append('|');
-            }
-            return builder.ToString();
-        }
-
-
-        /// <summary>
         /// This creates a debug file
         /// </summary>
         /// <param name="msg">The output message</param>
