@@ -129,10 +129,17 @@ namespace LanTalker2.Lib
             }
         }
 
+        /// <summary>
+        /// The protocl witch handles the client comunication
+        /// </summary>
+        /// <param name="readMessage">The received message</param>
+        /// <param name="client">The TCP client object</param>
+        /// <returns></returns>
         public string protV2(string readMessage, object client)
         {
             TcpClient tcpClient = (TcpClient)client;
             Offsets.OffsetClass offsets = new OffsetClass();
+            Parser parser = new Parser();
 
             Lib.json.RootObject rootMsg = JsonConvert.DeserializeObject<Lib.json.RootObject>(readMessage);
             Lib.json.RootObject rootSend = new Lib.json.RootObject();
@@ -148,11 +155,21 @@ namespace LanTalker2.Lib
                 {
                     
                     rootSend.READ.Offset.Add(rootMsg.READ.Offset[i]);
-                    rootSend.READ.Value.Add(offsets.processData("READ", rootMsg.READ.Offset[i]));
-                    /*
-                        * send result as Msg via tcpclient
-                        * result as an json array
-                        */
+
+                    int index = IndexOfInt(rootMsg.READ.Offset[i]);
+                    if (index > 0)
+                    {
+                        string size = offsets.offsetsSize[0, index, 2];
+
+                        if (parser.readFsData(size, rootMsg.READ.Offset[i]) != null)
+                            rootSend.READ.Value.Add(parser.readFsData(size, rootMsg.READ.Offset[i]));
+                        else
+                            rootSend.READ.Value.Add("NOK");
+                    }
+                    else
+                    {
+                        rootSend.READ.Value.Add("NOK");
+                    }
                 }
 
 
@@ -169,9 +186,22 @@ namespace LanTalker2.Lib
 
                     for (int i = 0; i <= rootMsg.WRITE.Offset.Count - 1; i++)
                     {
-                        
-                        rootSend.WRITE.Offset.Add(rootMsg.WRITE.Offset[i]);
-                        rootSend.WRITE.Value.Add(offsets.processData("WRITE", rootMsg.WRITE.Offset[i], rootMsg.WRITE.Value[i]));
+
+                        int index = IndexOfInt(rootMsg.WRITE.Offset[i]);
+                        if (index > 0)
+                        {
+                            string size = offsets.offsetsSize[0, index, 2];
+
+                            if (parser.readFsData(size, rootMsg.WRITE.Offset[i]) != null)
+                                rootSend.WRITE.Value.Add(parser.writeFS(size, rootMsg.WRITE.Offset[i], rootMsg.WRITE.Value[i]));
+                            else
+                                rootSend.WRITE.Value.Add("NOK");
+                        }
+                        else
+                        {
+                            rootSend.WRITE.Value.Add("NOK");
+                        }
+                       
                         /*
                          * send result as Msg via tcpclient
                          * result as an json array
@@ -232,6 +262,19 @@ namespace LanTalker2.Lib
             }
             logging.screamer("Result to Client " + JsonConvert.SerializeObject(rootSend), settings.debugger, settings.debugger);
             return JsonConvert.SerializeObject(rootSend);
+        }
+
+        static int IndexOfInt(string offset)
+        {
+            Offsets.OffsetClass offsets = new Offsets.OffsetClass();
+            for (int i = 0; i < (offsets.offsetsSize.Length / 3); i++)
+            {
+                if (offsets.offsetsSize[0, i, 0] == offset)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 }

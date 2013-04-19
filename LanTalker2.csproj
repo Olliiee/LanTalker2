@@ -54,6 +54,7 @@
     <Compile Include="Lib\fsuipcError.cs" />
     <Compile Include="Lib\json.cs" />
     <Compile Include="Lib\network.cs" />
+    <Compile Include="Lib\OffsetClass.cs" />
     <Compile Include="Lib\Parser.cs" />
     <Compile Include="Lib\settings.cs" />
     <Compile Include="Lib\stringLib.cs" />

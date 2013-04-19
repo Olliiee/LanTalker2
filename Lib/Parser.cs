@@ -1,5 +1,8 @@
 ﻿using Offsets;
 using FSUIPC;
+using System.Globalization;
+using System;
+using System.Collections.Generic;
 
 namespace LanTalker2.Lib
 {
@@ -25,18 +28,18 @@ namespace LanTalker2.Lib
 			{
 				case "READ":
 					{
-						result = offsets.processData(clientData[0], clientData[1]);
+						//result = offsets.processData(clientData[0], clientData[1]);
 						break;
 					}
 				case "WRITE":
 					{
-					   result = offsets.processData(clientData[0], clientData[1], clientData[2]);
+					   //result = offsets.processData(clientData[0], clientData[1], clientData[2]);
 					   break;
 					}
 
 				case "TRAFFIC":
 					{
-						result = traffic(clientText);
+						//result = traffic(clientText);
 						break;
 					}
 			
@@ -85,6 +88,243 @@ namespace LanTalker2.Lib
 						break;
 					}
 				
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// Writing to the FS
+		/// </summary>
+		/// <param name="size">The offset size</param>
+		/// <param name="offset"The offset itself</param>
+		/// <param name="newValue">The new offset value</param>
+		/// <returns>Returns OK or NOK</returns>
+		public string writeFS(string size, string offset, string newValue)
+		{
+			string result = "NOK";
+
+			int switchSize = Int32.Parse(size);
+
+			if (switchSize > 8)
+			{
+				switchSize = 9;
+			}
+
+			switch (switchSize)
+			{
+				case 1:
+					{
+						try
+						{
+							Offset<Byte> shortVar = new Offset<Byte>(Byte.Parse(offset, NumberStyles.HexNumber));
+							shortVar.Value = Convert.ToByte(newValue);
+							FSUIPCConnection.Process();
+							result = "OK";
+						}
+						catch (Exception ex)
+						{
+							result = "Error writing Byte Var " + ex;
+						}
+						break;
+					}
+
+				case 2:
+					{
+						try
+						{
+							Offset<short> shortVar = new Offset<short>(Int16.Parse(offset, NumberStyles.HexNumber));
+							shortVar.Value = Convert.ToInt16(newValue);
+							FSUIPCConnection.Process();
+							result = "OK";
+						}
+						catch (Exception ex)
+						{
+							result = "Error writing Short Var " + ex;
+						}
+						break;
+					}
+
+				case 4:
+					{
+						try
+						{
+							Offset<Int32> shortVar = new Offset<Int32>(Int32.Parse(offset, NumberStyles.HexNumber));
+							shortVar.Value = Convert.ToInt32(newValue);
+							FSUIPCConnection.Process();
+							result = "OK";
+						}
+						catch (Exception ex)
+						{
+							result = "Error writing Int32 Var " + ex;
+						}
+						break;
+					}
+
+				case 8:
+					{
+						try
+						{
+							Offset<Int64> shortVar = new Offset<Int64>(Int32.Parse(offset, NumberStyles.HexNumber));
+							shortVar.Value = Convert.ToInt64(newValue);
+							FSUIPCConnection.Process();
+							result = "OK";
+						}
+						catch (Exception ex)
+						{
+							result = "Error writing Int64 Var " + ex;
+						}
+						break;
+					}
+
+				case 9:
+					{
+						try
+						{
+							Offset<string> shortVar = new Offset<string>(Int32.Parse(offset, NumberStyles.HexNumber), Int32.Parse(size), true);
+							shortVar.Value = newValue;
+							FSUIPCConnection.Process();
+							result = "OK";
+						}
+						catch (Exception ex)
+						{
+							result = "Error writing Int64 Var " + ex;
+						}
+						break;
+					}
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// The function reads the data via the FSUIPC interface
+		/// </summary>
+		/// <param name="size">The offsets size: 1 = Byte; 2 = Int16; 4 = Int32; 8 = Int64</param>
+		/// <param name="offset">The FS offset</param>
+		/// <returns>The value of the requested offset</returns>
+		public string readFsData(string size, string offset)
+		{
+			string result = "NOK";
+
+			int switchSize = Int32.Parse(size);
+
+			// If bigger then 8 it must be a string
+			if (switchSize > 8)
+			{
+				switchSize = 9;
+			}
+
+			switch (switchSize)
+			{
+				case 1:
+					{
+						try
+						{
+							Offset<Byte> shortVar = new Offset<Byte>(Byte.Parse(offset, NumberStyles.HexNumber));
+							try
+							{
+								FSUIPCConnection.Process();
+							}
+							catch (FSUIPCException ex)
+							{
+								break;
+							}
+
+							result = Convert.ToString((Byte)shortVar.Value);
+						}
+						catch
+						{
+							Console.WriteLine("Error reading Byte Var");
+						}
+						break;
+					}
+
+				case 2:
+					{
+						try
+						{
+							Offset<short> shortVar = new Offset<short>(Int16.Parse(offset, NumberStyles.HexNumber));
+							try
+							{
+								FSUIPCConnection.Process();
+							}
+							catch (FSUIPCException ex)
+							{
+								break;
+							}
+
+							result = Convert.ToString((short)shortVar.Value);
+						}
+						catch
+						{
+							Console.WriteLine("Error reading Short Var");
+						}
+						break;
+					}
+
+				case 4:
+					{
+						try
+						{
+							Offset<Int32> shortVar = new Offset<Int32>(Int32.Parse(offset, NumberStyles.HexNumber));
+							Offset<Int32> shortVar2 = new Offset<Int32>(0x02B4);
+							try
+							{
+								FSUIPCConnection.Process();
+							}
+							catch (FSUIPCException ex)
+							{
+								result = "Error writing Int32 Var " + ex;
+								break;
+							}
+
+							result = Convert.ToString((Int32)shortVar.Value);
+						}
+						catch (Exception ex)
+						{
+							result = "Error writing Int32 Var " + ex;
+						}
+						break;
+					}
+
+				case 8:
+					{
+						try
+						{
+							Offset<Int64> shortVar = new Offset<Int64>(Int32.Parse(offset, NumberStyles.HexNumber));
+							result = Convert.ToString((Int64)shortVar.Value);
+						}
+						catch
+						{
+							Console.WriteLine("Error reading Int64 Var");
+						}
+						break;
+					}
+
+				case 9:
+					{
+						try
+						{
+							try
+							{
+								Offset<string> shortVar = new Offset<string>(Int32.Parse(offset, NumberStyles.HexNumber), Int32.Parse(size));
+								FSUIPCConnection.Process();
+								result = Convert.ToString((string)shortVar.Value);
+							}
+							catch (FSUIPCException ex)
+							{
+								result = "Error writing String Var " + ex;
+								break;
+							}
+
+						}
+						catch
+						{
+							Console.WriteLine("Error reading String Var");
+						}
+						break;
+					}
 			}
 
 			return result;
