@@ -1,5 +1,15 @@
-﻿using System;
-using System.Net;
+﻿/*
+ * Using the JSON.NET framework of James Newton-King
+ * http://james.newtonking.com/pages/json-net.aspx
+ * 
+ * Using FSUIPC client of Paul Henty
+ * http://forum.simflight.com/topic/40989-fsuipc-client-dll-for-net-version-20/
+ * 
+ * 
+ * FS LanTalker V2.1 BETA (C) Oliver Strauss 2013
+ */
+
+using System;
 using System.Net.Sockets;
 using System.Threading;
 using FSUIPC;
@@ -66,7 +76,6 @@ namespace LanTalker2
 			
 
 			//Try to connect to the FS via the FSUIPC Client for .NET
-			//http://forum.simflight.com/topic/40989-fsuipc-client-dll-for-net-version-20/
 			try
 			{
 				FSUIPCConnection.Open();
