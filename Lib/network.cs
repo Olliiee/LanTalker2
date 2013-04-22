@@ -155,7 +155,7 @@ namespace LanTalker2.Lib
                     rootSend.READ.Offset.Add(rootMsg.READ.Offset[i]);
 
                     bool cacheFound = false;
-                    string indexCache = IndexOfInt(rootMsg.READ.Offset[i], "offsetCache");
+                    string indexCache = IndexOfInt(rootMsg.READ.Offset[i], "offsetCacheRead");
 
                     if (indexCache == "-1")
                     {
@@ -192,6 +192,12 @@ namespace LanTalker2.Lib
 
 
             }
+            else
+            {
+                rootSend.ACTION = new json.ACTION();
+                rootSend.ACTION.Req = new List<string>();
+                rootSend.ACTION.Req.Add("ERROR_READ");
+            }
 
             if (rootMsg.WRITE != null && rootMsg.WRITE.Offset.Count > 0)
             {
@@ -205,7 +211,7 @@ namespace LanTalker2.Lib
                     for (int i = 0; i <= rootMsg.WRITE.Offset.Count - 1; i++)
                     {
                         bool cacheFound = false;
-                        string indexCache = IndexOfInt(rootMsg.WRITE.Offset[i], "offsetCache");
+                        string indexCache = IndexOfInt(rootMsg.WRITE.Offset[i], "offsetCacheWrite");
 
                         if (indexCache == "-1")
                         {
