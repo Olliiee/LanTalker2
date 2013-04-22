@@ -1,16 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 
- /*
- * This is an automated created offset file. Created by the Offsetparser at Donnerstag, 18. April 2013 16:07:12
- */
+/*
+* This is an automated created offset file. Created by the Offsetparser at Donnerstag, 18. April 2013 16:07:12
+*/
 
 namespace Offsets
 {
 	public class OffsetClass
 	{
+		public string[,] offsetCacheRead = new string[16,2];
+		public string[,] offsetCacheWrite = new string[16, 2];
+		public int cacheRunnerRead = 0;
+		public int cacheRunnerWrite = 0;
 
 		public string[,,] offsetsSize = new string[,,]
 		{

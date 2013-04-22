@@ -16,7 +16,7 @@ namespace LanTalker2.Lib
         
         LanTalker2.Lib.stringLib logging = new Lib.stringLib();             //byter - class for coneverting strings and logging
         LanTalker2.Lib.settings settings = new Lib.settings();              //debugger - if debug mode is active or not
-       
+        Offsets.OffsetClass offsets = new OffsetClass();
 
         /// <summary>
         /// Psssssst, the clients are talking, I listen to them
@@ -26,8 +26,6 @@ namespace LanTalker2.Lib
             settings.debugger = debug;
             this.tcpListener = new TcpListener(IPAddress.Any, 3000);
             tcpListener.Start();
-
-            
 
             while (true)
             {
@@ -138,7 +136,7 @@ namespace LanTalker2.Lib
         public string protV2(string readMessage, object client)
         {
             TcpClient tcpClient = (TcpClient)client;
-            Offsets.OffsetClass offsets = new OffsetClass();
+            
             Parser parser = new Parser();
 
             Lib.json.RootObject rootMsg = JsonConvert.DeserializeObject<Lib.json.RootObject>(readMessage);
@@ -156,15 +154,35 @@ namespace LanTalker2.Lib
                     
                     rootSend.READ.Offset.Add(rootMsg.READ.Offset[i]);
 
-                    int index = IndexOfInt(rootMsg.READ.Offset[i]);
-                    if (index > 0)
-                    {
-                        string size = offsets.offsetsSize[0, index, 2];
+                    bool cacheFound = false;
+                    string indexCache = IndexOfInt(rootMsg.READ.Offset[i], "offsetCache");
 
-                        if (parser.readFsData(size, rootMsg.READ.Offset[i]) != null)
-                            rootSend.READ.Value.Add(parser.readFsData(size, rootMsg.READ.Offset[i]));
-                        else
-                            rootSend.READ.Value.Add("NOK");
+                    if (indexCache == "-1")
+                    {
+                        indexCache = IndexOfInt(rootMsg.READ.Offset[i], "offsetSize");
+                    }
+                    else
+                    {
+                        cacheFound = true;
+                    }
+
+                    if (indexCache != "-1")
+                    {
+                        //string size = offsets.offsetsSize[0, index, 2];
+
+                        //if (parser.readFsData(size, rootMsg.READ.Offset[i]) != null)
+                        rootSend.READ.Value.Add(parser.readFsData(indexCache, rootMsg.READ.Offset[i]));
+                        //else
+                            //rootSend.READ.Value.Add("NOK");
+
+                        if (cacheFound == false)
+                        {
+                            offsets.offsetCacheRead[offsets.cacheRunnerRead, 0] = rootMsg.READ.Offset[i];
+                            offsets.offsetCacheRead[offsets.cacheRunnerRead++, 1] = indexCache;
+
+                            if (offsets.cacheRunnerRead == offsets.offsetCacheRead.Length / 2)
+                                offsets.cacheRunnerRead = 0;
+                        }
                     }
                     else
                     {
@@ -186,16 +204,34 @@ namespace LanTalker2.Lib
 
                     for (int i = 0; i <= rootMsg.WRITE.Offset.Count - 1; i++)
                     {
+                        bool cacheFound = false;
+                        string indexCache = IndexOfInt(rootMsg.WRITE.Offset[i], "offsetCache");
 
-                        int index = IndexOfInt(rootMsg.WRITE.Offset[i]);
-                        if (index > 0)
+                        if (indexCache == "-1")
                         {
-                            string size = offsets.offsetsSize[0, index, 2];
+                            indexCache = IndexOfInt(rootMsg.WRITE.Offset[i], "offsetSize");
+                        }
+                        else
+                        {
+                            cacheFound = true;
+                        }
+                        if (indexCache != "-1")
+                        {
+                            //string size = offsets.offsetsSize[0, index, 2];
 
-                            if (parser.readFsData(size, rootMsg.WRITE.Offset[i]) != null)
-                                rootSend.WRITE.Value.Add(parser.writeFS(size, rootMsg.WRITE.Offset[i], rootMsg.WRITE.Value[i]));
-                            else
-                                rootSend.WRITE.Value.Add("NOK");
+                            //if (parser.readFsData(size, rootMsg.WRITE.Offset[i]) != null)
+                            rootSend.WRITE.Value.Add(parser.writeFS(indexCache, rootMsg.WRITE.Offset[i], rootMsg.WRITE.Value[i]));
+                            //else
+                              //  rootSend.WRITE.Value.Add("NOK");
+
+                            if (cacheFound == false)
+                            {
+                                offsets.offsetCacheWrite[offsets.cacheRunnerWrite, 0] = rootMsg.WRITE.Offset[i];
+                                offsets.offsetCacheWrite[offsets.cacheRunnerWrite++, 1] = indexCache;
+
+                                if (offsets.cacheRunnerWrite == offsets.offsetCacheWrite.Length / 2)
+                                    offsets.cacheRunnerWrite = 0;
+                            }
                         }
                         else
                         {
@@ -264,17 +300,49 @@ namespace LanTalker2.Lib
             return JsonConvert.SerializeObject(rootSend);
         }
 
-        static int IndexOfInt(string offset)
+        public string IndexOfInt(string offset, string arrayName)
         {
-            Offsets.OffsetClass offsets = new Offsets.OffsetClass();
-            for (int i = 0; i < (offsets.offsetsSize.Length / 3); i++)
+            string size = "-1";
+            switch (arrayName)
             {
-                if (offsets.offsetsSize[0, i, 0] == offset)
-                {
-                    return i;
-                }
+                case "offsetSize":
+                    {
+                        for (int i = 0; i < (offsets.offsetsSize.Length / 3); i++)
+                        {
+                            if (offsets.offsetsSize[0, i, 0] == offset)
+                            {
+                                size = offsets.offsetsSize[0, i, 2];
+                            }
+                        }
+                        break;
+                    }
+
+                case "offsetCacheWrite":
+                    {
+                        for (int i = 0; i < (offsets.offsetCacheWrite.Length / 2); i++)
+                        {
+                            if (offsets.offsetCacheWrite[i, 0] == offset)
+                            {
+                                size = offsets.offsetCacheWrite[i, 1];
+                            }
+                        }
+                        break;
+                    }
+
+                case "offsetCacheRead":
+                    {
+                        for (int i = 0; i < (offsets.offsetCacheRead.Length / 2); i++)
+                        {
+                            if (offsets.offsetCacheRead[i, 0] == offset)
+                            {
+                                size = offsets.offsetCacheRead[i, 1];
+                            }
+                        }
+                        break;
+                    }
             }
-            return -1;
+
+            return size;
         }
     }
 }
