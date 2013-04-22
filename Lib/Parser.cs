@@ -1,8 +1,7 @@
-﻿using Offsets;
-using FSUIPC;
+﻿using System;
 using System.Globalization;
-using System;
-using System.Collections.Generic;
+using FSUIPC;
+using Offsets;
 
 namespace LanTalker2.Lib
 {
@@ -14,39 +13,6 @@ namespace LanTalker2.Lib
 		/// </summary>
 		Offsets.OffsetClass offsets = new OffsetClass();
 		
-		/// <summary>
-		/// Parse the received message from client and load the fs data
-		/// </summary>
-		/// <param name="clientText">The message received from client</param>
-		/// <returns>The result msg send to the client</returns>
-		public string parseText(string clientText)
-		{
-			string[] clientData = clientText.Split(':');
-			string result = "NOK";
-
-			switch (clientData[0])
-			{
-				case "READ":
-					{
-						//result = offsets.processData(clientData[0], clientData[1]);
-						break;
-					}
-				case "WRITE":
-					{
-					   //result = offsets.processData(clientData[0], clientData[1], clientData[2]);
-					   break;
-					}
-
-				case "TRAFFIC":
-					{
-						//result = traffic(clientText);
-						break;
-					}
-			
-			}
-			
-			return result;
-		}
 
 		/// <summary>
 		/// Requests the AI traffic information
@@ -268,7 +234,6 @@ namespace LanTalker2.Lib
 						try
 						{
 							Offset<Int32> shortVar = new Offset<Int32>(Int32.Parse(offset, NumberStyles.HexNumber));
-							Offset<Int32> shortVar2 = new Offset<Int32>(0x02B4);
 							try
 							{
 								FSUIPCConnection.Process();
@@ -292,12 +257,22 @@ namespace LanTalker2.Lib
 					{
 						try
 						{
-							Offset<Int64> shortVar = new Offset<Int64>(Int32.Parse(offset, NumberStyles.HexNumber));
-							result = Convert.ToString((Int64)shortVar.Value);
+							Offset<long> shortVar = new Offset<long>(Int32.Parse(offset, NumberStyles.HexNumber));
+							try
+							{
+								FSUIPCConnection.Process();
+							}
+							catch (FSUIPCException ex)
+							{
+								result = "Error writing Int64 Var " + ex;
+								break;
+							}
+
+							result = Convert.ToString((Int32)shortVar.Value);
 						}
-						catch
+						catch (Exception ex)
 						{
-							Console.WriteLine("Error reading Int64 Var");
+							result = "Error writing Int64 Var " + ex;
 						}
 						break;
 					}
